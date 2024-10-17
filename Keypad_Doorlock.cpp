@@ -50,8 +50,13 @@ public:
     if (result == 0) {
       lcd.print("Pin matched");
       digitalWrite(11, HIGH);
+      for(int i=this->delayForLock/1000; i>=0; i--){
+        lcd.setCursor(0, 1);
+        lcd.print(i);
+        delay(1000);
+      }
       //Serial.write(delayForLock);
-      delay(this->delayForLock);
+      //delay(this->delayForLock);
       digitalWrite(11, LOW);
 
     } else {
