@@ -3,13 +3,15 @@
 #include <Keypad.h>
 #include <ctype.h>
 
-#define ADDRESS 32
+#define ADDRESS 63
 #define LCD_R 16
 #define LCD_C 2
+#define MAX_ATTEMPT 2
 
 const byte ROWS = 4;
 const byte COLS = 4;
 int i = 0, j = 0;
+int attempt = 1;
 char str[16];
 
 char hexaKeys[ROWS][COLS] = {
@@ -55,12 +57,45 @@ public:
         lcd.print(i);
         delay(1000);
       }
+      lcd.clear();
+      for (int a = 0; a < 15; a++) {
+        str[a] = 0;
+      }
       //Serial.write(delayForLock);
       //delay(this->delayForLock);
       digitalWrite(11, LOW);
 
     } else {
       lcd.print("Incorrect pin");
+      for (int a = 0; a < 15; a++) {
+        str[a] = 0;
+      }
+      delay(1000);
+      lcd.clear();
+      Serial.println("Incorrect pin");
+      
+      if(attempt >= MAX_ATTEMPT){
+        Serial.print("Maximum attempts exceded");
+        lcd.setCursor(0, 0);
+        lcd.print("Try after");
+        lcd.setCursor(0, 1);
+        lcd.print("seconds");
+        for(int i=30; i>0; i--){
+          attempt = 1;
+          lcd.setCursor(10, 0);
+          //lcd.clear();
+          if(i<10){
+            lcd.setCursor(10, 0);
+            lcd.print(" ");
+          }
+          lcd.print(i);
+          delay(1000);
+          
+        }
+      }
+      Serial.println(attempt);
+      attempt++;
+      lcd.clear();
     }
   }
 
