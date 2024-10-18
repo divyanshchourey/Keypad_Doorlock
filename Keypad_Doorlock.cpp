@@ -278,6 +278,12 @@ void loop() {
       delay(1000);
       doorlock.changePassword(str);
       lcd.clear();
+    } else if (myKeys - '0' == 18){
+      Serial.println("Backspace");
+      lcd.setCursor(i-1, 0);
+      lcd.print(" ");
+      str[i-1] = 0;
+      i--;
     } else {
       Serial.print("Other");
     }
