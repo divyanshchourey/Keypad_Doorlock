@@ -2,11 +2,13 @@
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 #include <ctype.h>
+#include <EEPROM.h>
 
 #define ADDRESS 63
 #define LCD_R 16
-#define LCD_C 2
-#define MAX_ATTEMPT 2
+#define LCD_C 4
+#define MAX_ATTEMPT 5
+#define WAIT 40
 
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -27,13 +29,13 @@ byte colPins[COLS] = { 5, 4, 3, 2 };
 Keypad myKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 LiquidCrystal_I2C lcd(ADDRESS, LCD_R, LCD_C);
 
-
-
 class Doorlock {
 private:
   int delayForLock;
   //don't waste space in creating long array
-  char correct[16] = { '1', '2', '3', '4' };
+  char correct[16];
+  char arr[16];
+  // correct = EEPROM.get(10, arr);
 public:
   Doorlock() {}
   Doorlock(int delayForLock) {
@@ -48,7 +50,7 @@ public:
     Serial.print("enter called.");
     lcd.clear();
 
-    int result = strcmp(correct, s);
+    int result = strcmp(EEPROM.get(10, arr), s);
     if (result == 0) {
       lcd.print("Pin matched");
       digitalWrite(11, HIGH);
@@ -80,13 +82,13 @@ public:
         lcd.print("Try after");
         lcd.setCursor(0, 1);
         lcd.print("seconds");
-        for(int i=30; i>0; i--){
+        for(int i=WAIT; i>0; i--){
           attempt = 1;
           lcd.setCursor(10, 0);
           //lcd.clear();
           if(i<10){
             lcd.setCursor(10, 0);
-            lcd.print(" ");
+            lcd.print("0");
           }
           lcd.print(i);
           delay(1000);
@@ -140,7 +142,7 @@ public:
         //Serial.println("enter of change password called");
         lcd.clear();
 
-        int result = strcmp(correct, s);
+        int result = strcmp(EEPROM.get(10, arr), s);
         if (result == 0) {
           lcd.print("Pin matched.");
           delay(1000);
@@ -175,7 +177,8 @@ public:
               lcd.setCursor(0, 0);
               lcd.print("Password changed");
               delay(1000);
-              strcpy(correct, str);
+              //strcpy(EEPROM.get(10, arr), str);
+              EEPROM.put(10, str);
               for (int i = 0; i < 15; i++) {
                 Serial.print(correct[i]);
                 Serial.print(" ");
@@ -224,7 +227,6 @@ public:
 
 
 Doorlock doorlock(5000);
-
 void setup() {
 
   lcd.begin(16, 2);
@@ -236,16 +238,23 @@ void setup() {
   digitalWrite(12, LOW);
 
   Serial.begin(9600);
+  
+  lcd.setCursor(0, 0);
+  lcd.print("Welcome!");
+  delay(1000);
+  lcd.clear();
 }
 
 void loop() {
+  lcd.setCursor(0, 0);
+  lcd.print("Enter password:");
   char myKeys = myKeypad.getKey();
 
   if (myKeys) {
     if (((myKeys - '0' <= 9) && (myKeys - '0' >= 1)) || (myKeys - '0' == 0)) {
       str[i] = (myKeys);
       //Serial.print(myKeys);
-      lcd.setCursor(i, 0);
+      lcd.setCursor(i, 1);
       lcd.print(myKeys);
       i++;
     } else if (myKeys - '0' == -13) {
@@ -280,7 +289,7 @@ void loop() {
       lcd.clear();
     } else if (myKeys - '0' == 18){
       Serial.println("Backspace");
-      lcd.setCursor(i-1, 0);
+      lcd.setCursor(i-1, 1);
       lcd.print(" ");
       str[i-1] = 0;
       i--;
